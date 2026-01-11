@@ -5,5 +5,5 @@ used to show thought process and issues and their solutions throughout the chall
 
 - research on MCP standard to confirm which design choices will be the best - settled on stateless http streamable server that will return a json data
 - main source for the decision: https://github.com/modelcontextprotocol/typescript-sdk/blob/main/docs/server.md
- 
+- after completing basic mcp setup and testing basic interaction via the @modelcontextprotocol/inspector shifting attention to the core of the task
 

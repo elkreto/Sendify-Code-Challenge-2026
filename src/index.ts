@@ -71,6 +71,14 @@ server.registerTool(
                     length: 50,
                 },
             },
+            trackingHistory: [
+                {
+                    event: "Shipment picked up",
+                    date: "2023-10-01T10:00:00Z",
+                    location: "City A",
+                    
+                }
+            ]
         };
 
         return {
