@@ -46,7 +46,7 @@ There are also `XSRF-TOKEN` which can be simply obtained by calling GET on the t
 
 After some digging managed to find the math behind the PoW in the https://www.dbschenker.com/d99c8d9d-f385-4ec5-8ce6-9c02a2b1e51f which looks as follows:
 
-```
+```ts
 async function t(t) {
     const e = function(t, n) {
         const r = BigInt(8 * (t - 3))
@@ -113,7 +113,7 @@ After injecting simple script that would log any data sent to service workers I 
 
 It took me a bit to understand where the input is coming from as I was expecting a separate call to obtain the puzzle and jwt content, but after deeper look at network I saw that there has to be an interceptor in the main branch as a failing request is always repeated for the second time, later with correct headers. This lead to discovery of this code: 
 
-```
+```ts
 class ne {
     constructor(m) {
         this.solver = m,
@@ -167,13 +167,13 @@ This told me that the first failed request are as per design and rejected ones h
 This piece of code also is important as it shows how both the input from the header is parsed as well as encoded later to be put in the `Captcha Solution` header.
 
 So having an example `Captcha Puzzle` value and the handleCaptcha method
-``` 
+```ts
 const encodedText = 'ZXlKaGJHY2lPaUpJVXpJMU5pSjkuZXlKd2RYcDZiR1VpT2lKQlFVRkJRVUZCZEdaWVJXTnJRallyTW5sRlMwRkJRVUZCUVVGQlFVRkJRVUZCUVVGQlFVRkJRVUZDY0dodlduRmFaVlYxTkhFM2RWb3hiRFZSVldoc2VEWmhjMkkyUW5JeE9ETnBhbkUyWVUxaVpXbFpaejA5SWl3aWFXRjBJam94TnpZNE1UZ3hNVEl5TENKbGVIQWlPakUzTmpneE9ERXhPREo5LktKdERLc1VwSUYwSExTRXdMNVl2b3R3cHhpZm9tWkRtZVEwdnJnRWc3QjgsZXlKaGJHY2lPaUpJVXpJMU5pSjkuZXlKd2RYcDZiR1VpT2lKQlFVRkJRVUZDTldvNWJUZHpUbWhoYVVORlMwRkJRVUZCUVVGQlFVRkJRVUZCUVVGQlFVRkJRVUZDY0dodlduRmFaVlYxTkhFM2RWb3hiRFZSVldoc2VEWmhjMkkyUW5JeE9ETnBhbkUyWVUxaVpXbFpaejA5SWl3aWFXRjBJam94TnpZNE1UZ3hNVEl5TENKbGVIQWlPakUzTmpneE9ERXhPREo5Li00TXRieWc1MlVYVlpuaFdtUjc4RUo5c0x4TnV2TUllVS1qTV9rWVR0ZVEsZXlKaGJHY2lPaUpJVXpJMU5pSjkuZXlKd2RYcDZiR1VpT2lKQlFVRkJRVUZCZDB4dWFDczRiakExTjJsRlMwRkJRVUZCUVVGQlFVRkJRVUZCUVVGQlFVRkJRVUZDY0dodlduRmFaVlYxTkhFM2RWb3hiRFZSVldoc2VEWmhjMkkyUW5JeE9ETnBhbkUyWVUxaVpXbFpaejA5SWl3aWFXRjBJam94TnpZNE1UZ3hNVEl5TENKbGVIQWlPakUzTmpneE9ERXhPREo5LldtQ0tyc3lRSHl0bV83YXNoYXo3WWlmc3RKcE5DUEdWTjd2ZF9LN21VN0k='
 ```
 
 we can repeat the steps taken by code to get our 3 pairs of input (see example.js and pow.js for more details)
 
-```
+```ts
 //go from base64 to utf-8
 const decoded = Buffer.from(encodedText, 'base64').toString();
 //split by comma as per the original implementation
