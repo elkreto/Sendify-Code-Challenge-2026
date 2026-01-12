@@ -4,10 +4,53 @@ import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import express from "express";
 import * as z from "zod/v4";
 
+import { DBSchenkerTracking } from "./tracking.js";
+
 //create MCP server
 const server = new McpServer({
     name: "Sendify DB Schenker MCP Server",
     version: "0.0.1",
+});
+
+//define reusable schemas 
+const nameAddressSchema = z.object({
+  code: z.string(),
+  address: z.string(),
+}); 
+
+const scalarSchema = z.object({
+    value: z.number().positive(),
+    unit: z.string(),
+});
+
+const shipmentLocationSchema = z.object({
+  city: z.string().optional(),
+  code: z.string(),
+  countryCode: z.string(),
+  postalCode: z.string().optional()
+})
+
+const schemaReason = z.object({
+    code: z.string(), 
+    description: z.string().optional()
+})
+
+const shipmentEventSchema = z.object({
+  code: z.string(),
+  date: z.string(),
+  location: shipmentLocationSchema,
+  comment: z.string().optional(),
+  recipient: z.string().nullable().optional(),
+  reasons: z.array(schemaReason).optional()
+})
+
+const shipmentPackageSchema = z.object({
+    id: z.string(),
+    events: z.array(
+        shipmentEventSchema.extend({
+            location: z.string(),
+        })
+    ),
 });
 
 //register DB Schenker track shipment tool
@@ -25,71 +68,88 @@ server.registerTool(
                 ),
         },
         outputSchema: {
-            sender: z.object({
-                name: z.string(),
-                address: z.string(),
-            }),
-            reciver: z.object({
-                name: z.string(),
-                address: z.string(),
-            }),
+            sender: nameAddressSchema,
+            reciver: nameAddressSchema,
             details: z.object({
-                weight: z.number().positive(),
+                weight: scalarSchema,
+                volume: scalarSchema,
+                //no dimensions present in all of the shiments, so optional
                 dimensions: z.object({
                     width: z.number().positive(),
                     height: z.number().positive(),
                     length: z.number().positive(),
-                }),
+                }).optional(),
+                pieceCnt: z.number().positive(),
             }),
-            trackingHistory: z.array(
-                z.object({
-                    event: z.string(),
-                    date: z.string(),
-                    location: z.string(),
-                    cause: z.string().optional(),
-                })
-            ),
+            trackingHistory: z.array(shipmentEventSchema),
+            parcelsHistory: z.array(shipmentPackageSchema),
         },
     },
-    ({ trackingNumber }) => {
-        console.log(trackingNumber);
+    async ({ trackingNumber }) => {
+        console.log("Tracking number:", trackingNumber);
 
-        const content = {
-            sender: {
-                name: "Sender Name",
-                address: "123 Sender St, City, Country",
-            },
-            reciver: {
-                name: "Receiver Name",
-                address: "456 Receiver Ave, City, Country",
-            },
-            details: {
-                weight: 5.5,
-                dimensions: {
-                    width: 30,
-                    height: 20,
-                    length: 50,
+        try {
+            const shipmentData = await DBSchenkerTracking.trackShipment(trackingNumber);
+            const content = {
+                sender: {
+                    code: shipmentData.location.collectFrom.city || "N/A",
+                    address: `${
+                        shipmentData.location.collectFrom.postalCode
+                            ? shipmentData.location.collectFrom.postalCode +
+                              ", "
+                            : ""
+                    }${shipmentData.location.collectFrom.countryCode}`,
                 },
-            },
-            trackingHistory: [
-                {
-                    event: "Shipment picked up",
-                    date: "2023-10-01T10:00:00Z",
-                    location: "City A",
-                    
-                }
-            ]
-        };
+                reciver: {
+                    code: shipmentData.location.deliverTo.city || "N/A",
+                    address: `${
+                        shipmentData.location.deliverTo.postalCode
+                            ? shipmentData.location.deliverTo.postalCode + ", "
+                            : ""
+                    }${shipmentData.location.deliverTo.countryCode}`,
+                },
+                details: {
+                    weight: shipmentData.goods.weight,
+                    volume: shipmentData.goods.volume,
+                    pieceCnt: shipmentData.goods.pieces,
+                    dimensions:
+                        shipmentData.goods.dimensions.length > 0
+                            ? {
+                                  width: shipmentData.goods.dimensions[0] || 0,
+                                  height: shipmentData.goods.dimensions[1] || 0,
+                                  length: shipmentData.goods.dimensions[2] || 0,
+                              }
+                            : undefined,
+                },
+                trackingHistory: shipmentData.events,
+                parcelsHistory: shipmentData.packages,
+            };
 
-        return {
-            content: [
-                {
-                    type: "text",
-                    text: JSON.stringify(content, null, 2),
-                },
-            ],
-            structuredContent: content,
-        };
+            console.log(content)
+
+            return {
+                content: [
+                    {
+                        type: "text",
+                        text: JSON.stringify(content, null, 2),
+                    },
+                ],
+                structuredContent: content,
+            };
+        }
+        catch (error) {
+            console.error("Error tracking shipment:", error);
+
+            return {
+                isError: true,
+                content: [
+                    {
+                        type: "text",
+                        text: `Error tracking shipment: ${error instanceof Error ? error.message : String(error)}`,
+                    }
+                ]
+            }
+        }
     }
 );
 
