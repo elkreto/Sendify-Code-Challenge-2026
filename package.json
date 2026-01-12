@@ -18,6 +18,7 @@
   "scripts": {
     "start": "npx tsc && node dist/index.js",
     "inspect": "npx @modelcontextprotocol/inspector http://localhost:3000/mcp",
-    "dev": "nodemon --exec tsx src/index.ts"
+    "dev": "nodemon --exec tsx src/index.ts",
+    "test": "node --import tsx --test"
   }
 }
