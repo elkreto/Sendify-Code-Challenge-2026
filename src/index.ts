@@ -125,8 +125,6 @@ server.registerTool(
                 parcelsHistory: shipmentData.packages,
             };
 
-            console.log(content)
-
             return {
                 content: [
                     {
