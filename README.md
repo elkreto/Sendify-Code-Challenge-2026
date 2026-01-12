@@ -1,14 +1,38 @@
 # Sendify Code Challenge: DB Schenker Shipment Tracker MCP Server
 
+## Instructions to run the code
+
+As a prerequisite you need `npm` and `node` (version 22 recomended).
+\
+`npm i` to install the dependencies
+\
+`npm run test` to execute all tests - run request for all of the provided package ids
+\
+`npm run start` to run the server
+\
+`npm run dev` to run the server with hot reload functionality
+
+## Docs
+All of the files reside in `/src` directory.
+
+`captcha.ts` - contains function to solve puzzle and calculate captcha solution\
+`example.js` - contains my initial proof of concept work to verify captcha code with manually pasted input from the browser\
+`index.ts` - main server file, whole MCP implementation lies in there\
+`pow.ts` - proof of work math from Schenker website rewriten to TypeScript, needed for captcha calculations\
+`tracking.test.ts` - tests for *tracking.ts*\
+`tracking.ts` - contains logic for making the subsequent requests to obtain the data from Schenker API
+
 ## Design/Coding diary
 used to show thought process and issues and their solutions throughout the challenge
 
-research on MCP standard to confirm which design choices will be the best - settled on stateless http streamable server that will return a json data
+After evaluating desired technologies that Sendify uses I have settled on TypeScript as its rich library support and my expierience with it are a better fit for the challenge than Go.
+
+Research on MCP standard to confirm which design choices will be the best - settled on stateless http streamable server that will return a json data
 main source for the decision: https://github.com/modelcontextprotocol/typescript-sdk/blob/main/docs/server.md
 
-after completing basic mcp setup and testing basic interaction via the @modelcontextprotocol/inspector shifting attention to the core of the task
+After completing basic mcp setup and testing basic interaction via the @modelcontextprotocol/inspector shifting attention to the core of the task
 
-indentified two crucial endpoints that get called in order to retrieve all of the needed information:
+Indentified two crucial endpoints that get called in order to retrieve all of the needed information:
 - https://www.dbschenker.com/nges-portal/api/public/tracking-public/shipments?query=`${shipmentId}`
 - https://www.dbschenker.com/nges-portal/api/public/tracking-public/shipments/land/`${sttNumber}`
 
@@ -180,5 +204,21 @@ Checking with the tied input (failed 429 request) and subsequent output (success
 With this every information (and a bit more) is in our reach in fast, lightweight (headless - no ui needed) and reliable fashion. 
 Rest was just the case of writing simple class to handle the requests, revalidating captcha and formatting the data. Just to clean up the project I migrated the PoW functions to TypeScript, but that was not strictly neccessary.
 
+Added tests to provide an easy way to verify the behaviour of the core funcitonality. 
+
 ## Overview and summary
+
+In general I think I archived all of the desired outcomes of this challenge that I set out for myself.
+I suppose by marking the individual tracking events per package this perhaps was indended to be completed with Playwright
+or other similar E2E testing tool to interact with UI.
+Although I have expierience writing tests with Playwright I assumed a headless solution that is reverse engineering the captcha is cleaner and more efficient. 
+Now with this approach it should take less then 1 second to pull the needed data. Direct access also makes it more robust, as UI changes cannot easily disrupt it.
+
+All in I have spent about 6 hours on the assignment, split between three coding sessions. I feel this is quite much for such,
+so I refrained from implementing auth for MCP and perhaps adding more documentation beyond the readme.
+Nontheless I feel this is fairly complete solution that tackles the problem well 
+as well as shows my coding style and thought process in a meaningful fashion. 
+
+It was quite fun to do some reverse engineering on this project, hope to hear from you
+#### *Stanislaw Pachnik*
 
